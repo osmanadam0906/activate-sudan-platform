@@ -1,0 +1,6 @@
+{
+  "name": "Activate Sudan",
+  "description": "منصة تفعيل واشتراكات كافة البرامج والمواقع في السودان - لينكد إن بريميوم، كلاودي، نتفليكس، دولينقو وغيرهم بأفضل الأسعار",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
