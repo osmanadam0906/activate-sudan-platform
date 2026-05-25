@@ -12,6 +12,7 @@ import { CategoryType, Service, Plan, Order, Advertisement, SpecialOffer, CartIt
 import { SERVICES, DEFAULT_USD_TO_SDG } from './data';
 import Logo from './components/Logo';
 import ServiceCard from './components/ServiceCard';
+import { PlatformLogo } from './components/PlatformLogo';
 import OrderDrawer from './components/OrderDrawer';
 import CartDrawer from './components/CartDrawer';
 import FAQSection from './components/FAQSection';
@@ -19,6 +20,49 @@ import StoreReviews from './components/StoreReviews';
 import WhatsAppWidget from './components/WhatsAppWidget';
 import CategoryDrawer from './components/CategoryDrawer';
 import * as LucideIcons from 'lucide-react';
+
+const SPECIAL_OFFERS = [
+  {
+    id: 'tg-premium-special',
+    serviceId: 'telegram',
+    planId: 'tg-premium-monthly',
+    nameAr: 'تليجرام بريميوم النخبوي (شهر)',
+    nameEn: 'Telegram Premium Elite (1 Month)',
+    discountBadge: '-40%',
+    iconName: 'Send',
+    oldPrice: '120K',
+    newPrice: '57K',
+    oldPriceUsd: '13.0',
+    newPriceUsd: '7.2'
+  },
+  {
+    id: 'duo-plus-special',
+    serviceId: 'duolingo',
+    planId: 'duo-personal-yearly',
+    nameAr: 'سوبر دولينجو بلس لتعلم اللغات (سنة)',
+    nameEn: 'Super Duolingo Plus (1 Year)',
+    discountBadge: '-58%',
+    iconName: 'GraduationCap',
+    oldPrice: '282K',
+    newPrice: '141K',
+    oldPriceUsd: '80.0',
+    newPriceUsd: '33.6'
+  },
+  {
+    id: 'yt-premium-special',
+    serviceId: 'youtube',
+    planId: 'yt-individual-plan',
+    nameAr: 'يوتيوب بريميوم السلس بدون إعلانات (شهر)',
+    nameEn: 'YouTube Premium No-Ads (1 Month)',
+    discountBadge: '-40%',
+    iconName: 'Youtube',
+    oldPrice: '44K',
+    newPrice: '26K',
+    oldPriceUsd: '10.3',
+    newPriceUsd: '6.22'
+  }
+];
+
 
 export default function App() {
   const { user, isSignedIn } = useUser();
@@ -44,6 +88,82 @@ export default function App() {
   // Static exchange rate locked to 4200 SDG
   const [usdToSdgRate] = useState<number>(4200);
   const [showCurrencyEquivalent, setShowCurrencyEquivalent] = useState(true);
+
+  // أسعار الصرف الثابتة المعتمدة في تفعيل الاشتراكات الرقمية (يمكن تغييرها يدوياً هنا)
+  const USD_TO_SDG_EXCHANGE = 4200; // 1 دولار = 4200 جنيه سوداني
+  const USD_TO_SAR_EXCHANGE = 4; // 1 دولار = 3.75 ريال سعودي
+  const USD_TO_EGP_EXCHANGE = 55; // 1 دولار = 50.0 جنيه مصري
+
+  // العملة النشطة (محددة جغرافياً عبر الـ IP أو يدوياً عبر الهيدر)
+  const [activeCurrency, setActiveCurrency] = useState<'USD' | 'SDG' | 'SAR' | 'EGP'>(() => {
+    const saved = localStorage.getItem('activate_sudan_active_currency');
+    return (saved as any) || 'SDG'; // الافتراضي للجمهور السوداني
+  });
+
+  // دالة تحويل الأسعار التلقائية الممتازة حسب العملة المحددة
+  const getConvertedPrice = (priceUSD: number) => {
+    switch (activeCurrency) {
+      case 'SDG':
+        return {
+          value: Math.round(priceUSD * USD_TO_SDG_EXCHANGE),
+          symbol: lang === 'ar' ? 'ج.س' : 'SDG'
+        };
+      case 'SAR':
+        return {
+          value: parseFloat((priceUSD * USD_TO_SAR_EXCHANGE).toFixed(2)),
+          symbol: lang === 'ar' ? 'ر.س' : 'SAR'
+        };
+      case 'EGP':
+        return {
+          value: Math.round(priceUSD * USD_TO_EGP_EXCHANGE),
+          symbol: lang === 'ar' ? 'ج.م' : 'EGP'
+        };
+      case 'USD':
+      default:
+        return {
+          value: parseFloat(priceUSD.toFixed(2)),
+          symbol: '$'
+        };
+    }
+  };
+
+  // نظام التوجيه التلقائي الجغرافي (Geo-IP Routing) عند بدء تصفح المنصة
+  useEffect(() => {
+    const savedCurrency = localStorage.getItem('activate_sudan_active_currency');
+    if (!savedCurrency) {
+      fetch('https://ipapi.co/json/')
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to resolve host');
+          return res.json();
+        })
+        .then((data) => {
+          if (data && data.country_code) {
+            const country = data.country_code.toUpperCase();
+            if (country === 'SA') {
+              setActiveCurrency('SAR');
+              localStorage.setItem('activate_sudan_active_currency', 'SAR');
+              setToastMsg(lang === 'ar' ? '🇸🇦 تم تحديد الريال السعودي تلقائياً بناءً على موقعك الحالي' : '🇸🇦 Saudi Riyal selected automatically based on your location');
+            } else if (country === 'SD') {
+              setActiveCurrency('SDG');
+              localStorage.setItem('activate_sudan_active_currency', 'SDG');
+              setToastMsg(lang === 'ar' ? '🇸🇩 تم تحديد الجنيه السوداني تلقائياً بناءً على موقعك الحالي' : '🇸🇩 Sudanese Pound selected automatically based on your location');
+            } else if (country === 'EG') {
+              setActiveCurrency('EGP');
+              localStorage.setItem('activate_sudan_active_currency', 'EGP');
+              setToastMsg(lang === 'ar' ? '🇪🇬 تم تحديد الجنيه المصري تلقائياً بناءً على موقعك الحالي' : '🇪🇬 Egyptian Pound selected automatically based on your location');
+            } else {
+              setActiveCurrency('USD');
+              localStorage.setItem('activate_sudan_active_currency', 'USD');
+              setToastMsg(lang === 'ar' ? '🌐 تم تحديد الدولار الأمريكي لمدفوعاتك الدولية' : '🌐 US Dollar enabled automatically for international payments');
+            }
+            setTimeout(() => setToastMsg(''), 5500);
+          }
+        })
+        .catch((err) => {
+          console.log('Geo-IP routing gracefully fell back to default currency (SDG/USD) without user disturbance:', err);
+        });
+    }
+  }, [lang]);
 
   // Live Order Tracking states
   const [searchOrderId, setSearchOrderId] = useState('');
@@ -298,8 +418,8 @@ export default function App() {
       {/* Upper E-commerce Header Grid inspired by Tafeelak.com */}
       <header className={`sticky top-0 z-40 transition-colors duration-300 border-b ${
         isDarkMode 
-          ? 'bg-[#0a192f] border-slate-800 shadow-[0_4px_30px_rgba(0,0,0,0.3)] text-white' 
-          : 'bg-[#0a192f] border-blue-950 shadow-md text-white'
+          ? 'bg-[#0a192f]/95 backdrop-blur-md border-slate-800 shadow-[0_4px_30px_rgba(0,0,0,0.3)] text-white' 
+          : 'bg-white/95 backdrop-blur-md border-slate-200 shadow-md text-slate-800'
       }`}>
         {/* Main top bar container */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -309,20 +429,28 @@ export default function App() {
             <button
               id="header-side-bar-trigger"
               onClick={() => setIsCategoryDrawerOpen(true)}
-              className="md:hidden px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition active:scale-95 cursor-pointer"
+              className={`md:hidden px-3 py-2 rounded-xl transition border active:scale-95 cursor-pointer ${
+                isDarkMode 
+                  ? 'bg-slate-800 border-slate-700 text-sky-450 hover:bg-slate-700 text-sky-400' 
+                  : 'bg-slate-50 border-slate-200 text-blue-600 hover:bg-slate-100'
+              }`}
               title={isAr ? 'تصفح أقسام المتجر' : 'Browse Catalog'}
             >
               <LucideIcons.Menu className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-2.5">
-              <Logo className="text-white" lang={lang} />
-              <div className="flex flex-col text-right border-r border-slate-800 pr-2.5">
-                <span className="text-[10px] text-amber-400 font-extrabold tracking-widest leading-none uppercase flex items-center gap-1">
+              <Logo className={isDarkMode ? 'text-white' : 'text-slate-900'} lang={lang} />
+              <div className={`flex flex-col text-right border-r pr-2.5 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                <span className="text-[10px] text-amber-500 font-extrabold tracking-widest leading-none uppercase flex items-center gap-1">
                   <span>🇸🇩</span>
                   <span>{isAr ? 'الوكيل المعتمد الأول' : 'Official Distributor'}</span>
                 </span>
-                <span className="text-[9px] text-slate-300 font-black mt-1.5 leading-none bg-slate-800/80 px-2 py-1 rounded-md border border-slate-700/60 font-mono inline-block">
+                <span className={`text-[9px] font-black mt-1.5 leading-none px-2 py-1 rounded-md border font-mono inline-block ${
+                  isDarkMode 
+                    ? 'text-slate-300 bg-slate-800/80 border-slate-700/60' 
+                    : 'text-blue-700 bg-blue-50/70 border-blue-105 border-blue-100'
+                }`}>
                   {isAr ? 'سعر الصرف ثابت: $1 = 4200 ج.س' : 'Static Rate: 1 USD = 4200 SDG'}
                 </span>
               </div>
@@ -336,7 +464,7 @@ export default function App() {
                 className={`p-2 rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 border ${
                   isDarkMode 
                     ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-705' 
-                    : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-150'
+                    : 'bg-slate-100 border-slate-200 text-slate-750 hover:bg-slate-150'
                 }`}
                 title={isAr ? 'تغيير المظهر العام' : 'Toggle Theme'}
               >
@@ -346,6 +474,31 @@ export default function App() {
                   <LucideIcons.Moon className="w-4 h-4 text-slate-700 font-bold" />
                 )}
               </button>
+
+              {/* Mobile Currency Selector */}
+              <div className="relative flex items-center select-none shrink-0">
+                <select
+                  aria-label="Select Currency / اختر العملة"
+                  value={activeCurrency}
+                  onChange={(e) => {
+                    const val = e.target.value as any;
+                    setActiveCurrency(val);
+                    localStorage.setItem('activate_sudan_active_currency', val);
+                    setToastMsg(lang === 'ar' ? `💱 تم تغيير العملة المفضلة إلى: ${val}` : `💱 Currency changed to: ${val}`);
+                    setTimeout(() => setToastMsg(''), 4000);
+                  }}
+                  className={`outline-none font-black text-[10px] py-1.5 px-1.5 rounded-xl border cursor-pointer transition-all ${
+                    isDarkMode
+                      ? 'bg-slate-800 border-slate-700 text-slate-100'
+                      : 'bg-slate-100 border-slate-200 text-slate-800'
+                  }`}
+                >
+                  <option value="SDG">ج.س</option>
+                  <option value="SAR">ر.س</option>
+                  <option value="EGP">ج.م</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
 
               {/* Mobile Language Switcher */}
               <button
@@ -386,7 +539,7 @@ export default function App() {
                 </SignInButton>
               </SignedOut>
               <SignedIn>
-                <div className="flex items-center justify-center scale-90 border border-slate-700 bg-slate-850 p-0.5 rounded-full">
+                <div className={`flex items-center justify-center scale-90 border p-0.5 rounded-full ${isDarkMode ? 'border-slate-700 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
                   <UserButton afterSignOutUrl="/" />
                 </div>
               </SignedIn>
@@ -403,12 +556,16 @@ export default function App() {
               placeholder={isAr ? 'ابحث عن اشتراك، لعبة، أو رمز تفعيل أصلي (مثل: ويندوز، نتفليكس)...' : 'Search for any premium active license...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-2xl py-2.5 pr-10 pl-10 text-xs font-black text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all duration-300 text-right sm:text-right"
+              className={`w-full border rounded-2xl py-2.5 pr-10 pl-10 text-xs font-black placeholder-slate-450 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all duration-300 text-right sm:text-right ${
+                isDarkMode 
+                  ? 'bg-slate-800/85 border-slate-700 text-white placeholder-slate-400' 
+                  : 'bg-slate-100 border-slate-200 text-slate-800 placeholder-slate-500 focus:bg-white'
+              }`}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 left-3 flex items-center text-slate-400 hover:text-white transition"
+                className={`absolute inset-y-0 left-3 flex items-center transition ${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-800'}`}
               >
                 <LucideIcons.X className="w-4 h-4" />
               </button>
@@ -422,8 +579,8 @@ export default function App() {
               onClick={toggleDarkMode}
               className={`p-2 rounded-xl transition flex items-center justify-center cursor-pointer active:scale-95 border ${
                 isDarkMode 
-                  ? 'bg-slate-800 border-slate-700 text-amber-350 hover:bg-slate-705' 
-                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-150 shadow-xs'
+                  ? 'bg-slate-800 border-slate-700 text-amber-350 hover:bg-slate-700' 
+                  : 'bg-slate-105 bg-slate-100 border-slate-200 text-slate-755 hover:bg-slate-150'
               }`}
               title={isAr ? 'تغيير مظهر متجر تفعيلك' : 'Toggle Theme'}
             >
@@ -440,12 +597,38 @@ export default function App() {
               )}
             </button>
 
+            {/* Desktop Currency Dropdown Selector */}
+            <div className="relative flex items-center gap-1 select-none">
+              <LucideIcons.Coins className="w-4 h-4 text-amber-500 shrink-0" />
+              <select
+                aria-label="Choose Currency / اختر عملتك المفضلة"
+                value={activeCurrency}
+                onChange={(e) => {
+                  const val = e.target.value as any;
+                  setActiveCurrency(val);
+                  localStorage.setItem('activate_sudan_active_currency', val);
+                  setToastMsg(lang === 'ar' ? `💱 تم تغيير العملة المفضلة إلى: ${val}` : `💱 Currency preference saved as: ${val}`);
+                  setTimeout(() => setToastMsg(''), 4000);
+                }}
+                className={`outline-none font-black text-xs py-2.5 px-3 rounded-xl border cursor-pointer focus:ring-2 focus:ring-amber-500/40 transition-all ${
+                  isDarkMode
+                    ? 'bg-slate-800 border-slate-700 text-slate-100'
+                    : 'bg-slate-100 border-slate-200 text-slate-800'
+                }`}
+              >
+                <option value="SDG">{lang === 'ar' ? 'ج.س (السودان)' : 'SDG (Sudan)'}</option>
+                <option value="SAR">{lang === 'ar' ? 'ر.س (السعودية)' : 'SAR (KSA)'}</option>
+                <option value="EGP">{lang === 'ar' ? 'ج.م (مصر)' : 'EGP (Egypt)'}</option>
+                <option value="USD">{lang === 'ar' ? 'USD (الدولار)' : 'USD (Global)'}</option>
+              </select>
+            </div>
+
             {/* Desktop Language Selector */}
             <button
               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
               className={`px-3 py-2.5 rounded-xl border text-xs font-black transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                 isDarkMode 
-                  ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-705' 
+                  ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' 
                   : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-150'
               }`}
               title={isAr ? 'English Language' : 'اللغة العربية'}
@@ -480,7 +663,11 @@ export default function App() {
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-xs transition border border-slate-700">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-black text-xs transition border ${
+                isDarkMode 
+                  ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-white' 
+                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
+              }`}>
                 <UserButton afterSignOutUrl="/" />
                 <span>{isAr ? 'حسابي' : 'My Account'}</span>
               </div>
@@ -490,7 +677,11 @@ export default function App() {
         </div>
 
         {/* 2. Navigation bar menu */}
-        <div className="bg-slate-900 border-t border-slate-800 text-slate-200">
+        <div className={`border-t transition-colors ${
+          isDarkMode 
+            ? 'bg-slate-900 border-slate-800 text-slate-200' 
+            : 'bg-slate-50 border-slate-200 text-slate-700'
+        }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
             
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -631,26 +822,42 @@ export default function App() {
                   </div>
 
                   {/* Right Column: Hero Headline & Arabic Description */}
-                  <div className="md:col-span-7 space-y-3 text-right">
-                    <span className="text-amber-400 text-xs font-black tracking-widest bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-lg inline-block">
-                      {isAr ? 'الاشتراكات والتفعيلات الرقمية المعتمدة' : 'OFFICIAL SUBSCRIPTIONS'}
+                  <div className="md:col-span-7 space-y-4 text-right">
+                    <span className="text-amber-400 text-xs font-black tracking-widest bg-amber-500/10 border border-amber-500/25 px-3 py-1 rounded-lg inline-block uppercase animate-pulse">
+                      {isAr ? '🔥 أقوى العروض الرقمية في السودان' : '🔥 BEST DIGITAL DEALS IN SUDAN'}
                     </span>
                     <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight">
-                      {isAr ? 'متجري الخاص بالتفعيل وتنشيط كافة المواقع' : 'Official Premium Activation Store'}
-                      <span className="block text-amber-400 font-extrabold text-lg sm:text-xl mt-1">{isAr ? 'بمختلف حيثياته وبأفضل الأسعار' : 'Outstanding value & absolute local prices'}</span>
+                      {isAr ? 'وفر حتى 70% على اشتراكاتك الرقمية المفضلة' : 'Save up to 70% on your favorite digital subscriptions'}
+                      <span className="block text-amber-400 font-extrabold text-lg sm:text-xl md:text-2xl mt-1.5">{isAr ? 'مع منصة Activate Sudan الرسمية' : 'with the official Activate Sudan platform'}</span>
                     </h2>
                     <p className="text-[11px] md:text-xs text-slate-300 font-bold leading-relaxed max-w-lg">
                       {isAr 
-                        ? 'تفعيل رسمي بنسبة ١٠٠٪ لخدمات جوجل جيميناي، شات جي بي تي، دولينجو، نتفليكس، يوتيوب وتليجرام بريميوم. الدفع محلياً وبكل سهولة عبر بنكك.' 
-                        : 'Official 100% genuine activations for Google Gemini, ChatGPT, Duolingo, Netflix, YouTube Premium & Telegram. Local bank transfers accepted.'}
+                        ? 'تفعيل فوري وآمن بنسبة ١٠٠٪ لأكثر من ٢٠ خدمة رقمية ممتازة تشمل جوجل ون، شات جي بي تي، دولينجو، نتفليكس، يوتيوب وتليجرام بريميوم بأسعار منافسة وطرق دفع فورية.' 
+                        : 'Instant and 100% stable activation for premium channels: ChatGPT Plus, Google One, Duolingo, Netflix UHD, and Telegram VIP with easiest local transactions.'}
                     </p>
 
+                    {/* Elastic/Bouncy Shop Now Action Button */}
+                    <div className="pt-2 flex justify-end">
+                      <button 
+                        onClick={() => {
+                          const el = document.getElementById('search-anchor-box-catalog');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="group relative px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs sm:text-sm transition-all duration-300 hover:scale-[1.06] hover:rotate-1 active:scale-95 shadow-lg shadow-amber-500/20 hover:shadow-orange-500/30 flex items-center gap-2 cursor-pointer border border-amber-400/30 font-sans"
+                      >
+                        <span>{isAr ? 'تسوق الآن' : 'Shop Now'}</span>
+                        <LucideIcons.ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1.5" />
+                        
+                        {/* Soft glow hover ring element */}
+                        <div className="absolute inset-0 rounded-2xl border-2 border-white/20 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300" />
+                      </button>
+                    </div>
+
                     {/* Features Row */}
-                    <div className="flex flex-wrap items-center gap-3 justify-end text-[9px] sm:text-[10px] text-slate-400 font-extrabold pt-1">
-                      <span className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"><span className="text-emerald-500">✔</span> {isAr ? 'شبكات تواصل بطلاقة' : 'Social Media (Facebook)'}</span>
-                      <span className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"><span className="text-emerald-500">✔</span> {isAr ? 'صناع المحتوى وتيكتوك' : 'Content Creation (TikTok)'}</span>
-                      <span className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"><span className="text-emerald-500">✔</span> {isAr ? 'جوجل وتحسين محركات الـ SEO' : 'SEO Google'}</span>
-                      <span className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"><span className="text-emerald-500">✔</span> {isAr ? 'بوابة الدفع وبنك الخرطوم' : 'Payment Gateway (CIB)'}</span>
+                    <div className="flex flex-wrap items-center gap-2 justify-end text-[9px] sm:text-[10px] text-slate-400 font-extrabold pt-1">
+                      <span className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"><span className="text-emerald-500">✔</span> {isAr ? 'تنشيط سريع' : 'Fast Active'}</span>
+                      <span className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"><span className="text-emerald-500">✔</span> {isAr ? 'دفع عبر بنكك' : 'Bankak transfer'}</span>
+                      <span className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"><span className="text-emerald-500">✔</span> {isAr ? 'ضمان كامل المدة' : 'Full Guarantee'}</span>
                     </div>
                   </div>
 
@@ -1047,6 +1254,141 @@ export default function App() {
               <span className="text-xs font-black block">{isAr ? 'ضمان رسمي حقيقي 🏅' : 'Official Protected Warranty'}</span>
               <span className="text-[10px] text-slate-450 text-slate-400 mt-0.5 block leading-relaxed">{isAr ? 'ضمان تشغيل لكامل فترة الاشتراك دون أعطال.' : 'Enjoy full period backup guarantee support.'}</span>
             </div>
+          </div>
+        </div>
+
+        {/* 4.5. High-Converting Product Grid Section (العروض الأكثر مبيعاً) */}
+        <div className="space-y-6 pt-4 text-right">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] text-red-500 font-extrabold tracking-widest uppercase bg-rose-500/10 border border-red-500/20 px-2.5 py-1 rounded-lg inline-block animate-pulse">
+                ⚡ {isAr ? 'عروض حصرية لفترة محدودة' : 'Limited Time Deals'}
+              </span>
+              <h3 className={`text-xl font-black mt-2 flex items-center gap-2 justify-end ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                <span>{isAr ? 'أقوى التخفيضات والعروض الأكثر طلباً 🔥' : 'Hottest Subscription Deals & Best Sellers 🔥'}</span>
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1 font-bold">
+                {isAr ? 'اشترك الآن بأقل الأسعار في السودان مع تفعيل رسمي فوري وضمان كامل المدة' : 'Activate premium accounts for Duolingo, Telegram, and YouTube with maximum savings.'}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-1.5 self-end sm:self-auto text-[10px] bg-red-500/5 text-red-500 font-black border border-red-500/15 py-1.5 px-3 rounded-xl">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <span>{isAr ? 'ينتهي العرض قريباً جداً' : 'Expires soon'}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+            {SPECIAL_OFFERS.map((offer) => {
+              // Extract real service & plan to integrate with actual ecommerce shopping cart
+              const service = SERVICES.find(s => s.id === offer.serviceId);
+              const plan = service?.plans.find(p => p.id === offer.planId);
+              
+              return (
+                <div
+                  key={offer.id}
+                  className={`relative border rounded-3xl p-6 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl flex flex-col justify-between group ${
+                    isDarkMode
+                      ? 'bg-[#0a192f] border-slate-800 hover:border-red-500/30 text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]'
+                      : 'bg-white border-slate-200 hover:border-red-500/20 text-slate-800 shadow-md'
+                  }`}
+                >
+                  {/* Red Discount badge in upper absolute corner */}
+                  <div className="absolute top-4 right-4 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-2xl shadow-md border border-rose-500/20 tracking-wider flex items-center gap-1 z-10">
+                    <LucideIcons.TrendingDown className="w-3.5 h-3.5 shrink-0" />
+                    <span>{isAr ? `خصم ${offer.discountBadge}` : `${offer.discountBadge} OFF`}</span>
+                  </div>
+
+                  {/* Upper portion details */}
+                  <div className="space-y-4 flex-1">
+                    {/* Prominent Platform icon in center */}
+                    <div className="flex justify-center pt-4 pb-2">
+                      <div className={`p-4 rounded-2xl flex items-center justify-center shrink-0 w-20 h-20 shadow-lg border transition-transform duration-500 group-hover:rotate-6 ${
+                        isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 shadow-slate-950/40' 
+                          : 'bg-slate-50 border-slate-200/80 shadow-slate-100'
+                      }`}>
+                        <PlatformLogo serviceId={offer.serviceId} fallbackIconName={offer.iconName} className="w-14 h-14" />
+                      </div>
+                    </div>
+
+                    {/* Service title and short benefit info */}
+                    <div className="text-center">
+                      <h4 className={`text-sm sm:text-base font-black tracking-tight transition-colors ${isDarkMode ? 'text-white group-hover:text-amber-400' : 'text-slate-850 group-hover:text-blue-600'}`}>
+                        {isAr ? offer.nameAr : offer.nameEn}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 font-bold mt-1.5 max-w-xs mx-auto">
+                        {isAr ? 'تفعيل كامل وآمن ١٠٠٪ على حسابك بضمان طوال الفترة' : 'Guaranteed 100% legal official setup on your credentials'}
+                      </p>
+                    </div>
+
+                    {/* Dual Pricing section containing old (slashed) and new (colored bold) rates */}
+                    <div className="flex items-center justify-center gap-4 pt-3.5 border-t border-dashed border-slate-500/20 dark:border-slate-800/40">
+                      {(() => {
+                        const oldPriceConv = getConvertedPrice(parseFloat(offer.oldPriceUsd));
+                        const newPriceConv = getConvertedPrice(parseFloat(offer.newPriceUsd));
+                        return (
+                          <>
+                            <div className="text-right">
+                              <span className="text-[9px] text-slate-500 font-bold leading-none block">{isAr ? 'بدلاً من' : 'Original'}</span>
+                              <span className="text-xs text-slate-400 line-through font-extrabold font-mono mt-1 inline-block">
+                                {oldPriceConv.value.toLocaleString()} {oldPriceConv.symbol}
+                              </span>
+                            </div>
+                            
+                            <div className="text-right animate-pulse">
+                              <span className="text-[9px] text-emerald-500 font-black leading-none block">{isAr ? 'العرض الحالي' : 'Deal Price'}</span>
+                              <span className="text-base sm:text-lg font-black text-emerald-500 font-mono mt-1 inline-block">
+                                {newPriceConv.value.toLocaleString()} {newPriceConv.symbol}
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Twin interactive CTA Actions below the card */}
+                  <div className="space-y-2 mt-6">
+                    <button
+                      id={`special-add-to-cart-${offer.id}`}
+                      onClick={() => {
+                        if (service && plan) {
+                          handleAddToCart(service, plan);
+                        } else {
+                          setToastMsg(isAr ? '⚠️ عذراً، خطة المنتج هذه غير متوفرة حالياً.' : '⚠️ Sorry, this plan is not available.');
+                          setTimeout(() => setToastMsg(''), 4000);
+                        }
+                      }}
+                      className={`w-full py-2.5 px-4 rounded-2xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-97 border ${
+                        isDarkMode
+                          ? 'bg-slate-900 border-slate-700/60 text-slate-200 hover:bg-slate-800 hover:text-white'
+                          : 'bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-2xs'
+                      }`}
+                    >
+                      <LucideIcons.ShoppingCart className="w-4 h-4 shrink-0 text-red-500" />
+                      <span>{isAr ? 'إضافة للسلة 🛒' : 'Add to Cart 🛒'}</span>
+                    </button>
+
+                    <button
+                      id={`special-subscribe-${offer.id}`}
+                      onClick={() => {
+                        if (service && plan) {
+                          setSelectedPlanDetail({ service, plan });
+                        } else {
+                          setToastMsg(isAr ? '⚠️ عذراً، هذه الباقة غير متوفرة للتفعيل السريع.' : '⚠️ Product not accessible.');
+                          setTimeout(() => setToastMsg(''), 4000);
+                        }
+                      }}
+                      className="w-full py-2.5 px-4 rounded-2xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-97 bg-gradient-to-r from-red-600 via-rose-600 to-red-500 text-white hover:brightness-110 shadow-lg shadow-red-500/10 hover:shadow-red-600/20 border border-rose-500/20"
+                    >
+                      <LucideIcons.Zap className="w-3.5 h-3.5 shrink-0 animate-pulse text-amber-300" />
+                      <span>{isAr ? 'اشترك الآن ⚡' : 'Subscribe Now ⚡'}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -1617,6 +1959,7 @@ export default function App() {
                           onSelectPlan={(serv, pl) => setSelectedPlanDetail({ service: serv, plan: pl })}
                           onAddToCart={handleAddToCart}
                           isDarkMode={isDarkMode}
+                          activeCurrency={activeCurrency}
                         />
                       ))}
                     </div>
@@ -1644,10 +1987,11 @@ export default function App() {
                     usdToSdgRate={usdToSdgRate}
                     showCurrencyEquivalent={showCurrencyEquivalent}
                     selectedCurrency="both"
-                    lang={lang}
+                     lang={lang}
                     onSelectPlan={(serv, pl) => setSelectedPlanDetail({ service: serv, plan: pl })}
                     onAddToCart={handleAddToCart}
                     isDarkMode={isDarkMode}
+                    activeCurrency={activeCurrency}
                   />
                 ))}
               </div>
