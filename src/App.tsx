@@ -92,7 +92,7 @@ export default function App() {
   // أسعار الصرف الثابتة المعتمدة في تفعيل الاشتراكات الرقمية (يمكن تغييرها يدوياً هنا)
   const USD_TO_SDG_EXCHANGE = 4200; // 1 دولار = 4200 جنيه سوداني
   const USD_TO_SAR_EXCHANGE = 4; // 1 دولار = 3.75 ريال سعودي
-  const USD_TO_EGP_EXCHANGE = 55; // 1 دولار = 50.0 جنيه مصري
+  const USD_TO_EGP_EXCHANGE = 55.0; // 1 دولار = 50.0 جنيه مصري
 
   // العملة النشطة (محددة جغرافياً عبر الـ IP أو يدوياً عبر الهيدر)
   const [activeCurrency, setActiveCurrency] = useState<'USD' | 'SDG' | 'SAR' | 'EGP'>(() => {
@@ -127,43 +127,15 @@ export default function App() {
     }
   };
 
-  // نظام التوجيه التلقائي الجغرافي (Geo-IP Routing) عند بدء تصفح المنصة
+  // نظام اختيار العملة يدوي بالكامل وتعيين الافتراضي عند أول زيارة بدون أي فحص للـ IP
   useEffect(() => {
     const savedCurrency = localStorage.getItem('activate_sudan_active_currency');
     if (!savedCurrency) {
-      fetch('https://ipapi.co/json/')
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed to resolve host');
-          return res.json();
-        })
-        .then((data) => {
-          if (data && data.country_code) {
-            const country = data.country_code.toUpperCase();
-            if (country === 'SA') {
-              setActiveCurrency('SAR');
-              localStorage.setItem('activate_sudan_active_currency', 'SAR');
-              setToastMsg(lang === 'ar' ? '🇸🇦 تم تحديد الريال السعودي تلقائياً بناءً على موقعك الحالي' : '🇸🇦 Saudi Riyal selected automatically based on your location');
-            } else if (country === 'SD') {
-              setActiveCurrency('SDG');
-              localStorage.setItem('activate_sudan_active_currency', 'SDG');
-              setToastMsg(lang === 'ar' ? '🇸🇩 تم تحديد الجنيه السوداني تلقائياً بناءً على موقعك الحالي' : '🇸🇩 Sudanese Pound selected automatically based on your location');
-            } else if (country === 'EG') {
-              setActiveCurrency('EGP');
-              localStorage.setItem('activate_sudan_active_currency', 'EGP');
-              setToastMsg(lang === 'ar' ? '🇪🇬 تم تحديد الجنيه المصري تلقائياً بناءً على موقعك الحالي' : '🇪🇬 Egyptian Pound selected automatically based on your location');
-            } else {
-              setActiveCurrency('USD');
-              localStorage.setItem('activate_sudan_active_currency', 'USD');
-              setToastMsg(lang === 'ar' ? '🌐 تم تحديد الدولار الأمريكي لمدفوعاتك الدولية' : '🌐 US Dollar enabled automatically for international payments');
-            }
-            setTimeout(() => setToastMsg(''), 5500);
-          }
-        })
-        .catch((err) => {
-          console.log('Geo-IP routing gracefully fell back to default currency (SDG/USD) without user disturbance:', err);
-        });
+      // تعيين الجنيه السوداني SDG كعملة افتراضية لمدونة متجر Activate Sudan
+      setActiveCurrency('SDG');
+      localStorage.setItem('activate_sudan_active_currency', 'SDG');
     }
-  }, [lang]);
+  }, []);
 
   // Live Order Tracking states
   const [searchOrderId, setSearchOrderId] = useState('');
