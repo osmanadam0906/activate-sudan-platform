@@ -29,7 +29,7 @@ const SPECIAL_OFFERS = [
     nameAr: 'تليجرام بريميوم النخبوي (شهر)',
     nameEn: 'Telegram Premium Elite (1 Month)',
     discountBadge: '-40%',
-    iconName: 'Send',
+    iconName: 'Telegram',
     oldPrice: '120K',
     newPrice: '57K',
     oldPriceUsd: '13.0',
@@ -42,7 +42,7 @@ const SPECIAL_OFFERS = [
     nameAr: 'سوبر دولينجو بلس لتعلم اللغات (سنة)',
     nameEn: 'Super Duolingo Plus (1 Year)',
     discountBadge: '-58%',
-    iconName: 'GraduationCap',
+    iconName: 'Duolingo',
     oldPrice: '282K',
     newPrice: '141K',
     oldPriceUsd: '80.0',
@@ -483,7 +483,7 @@ export default function App() {
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="px-2.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-[10px] transition active:scale-95 cursor-pointer">
-                    {isAr ? 'دخول 🔐' : 'Login 🔐'}
+                    {isAr ? 'تسجيل الدخول 🔐' : 'Login 🔐'}
                   </button>
                 </SignInButton>
               </SignedOut>
