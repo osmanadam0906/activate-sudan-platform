@@ -127,11 +127,9 @@ export default function App() {
 
   const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>([]);
 
-  // الخدعة الذكية: نقوم بدمج روابط الصور الملونة مباشرة داخل الكتالوج الأساسي عند التحميل
   const [services, setServices] = useState<Service[]>(() => {
     const baseServices = SERVICES;
     
-    // خريطة الروابط الملونة فائقة الدقة .svg لجميع المنصات الخاصة بك
     const iconMapping: { [key: string]: string } = {
       'telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg',
       'youtube': 'https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg',
@@ -182,8 +180,23 @@ export default function App() {
 
   const handleAddToCart = (service: Service, plan: Plan) => {
     if (!isSignedIn) {
-      alert(isAr ? 'يرجى تسجيل الدخول أولاً للوصول إلى سلة مشترياتك وإضافة الباقة.' : 'Please sign in first.');
-      clerk.openSignIn();
+      // تعديل تنبيه إضافة السلة ليكون احترافياً مودرن بلغة SweetAlert
+      if ((window as any).Swal) {
+        (window as any).Swal.fire({
+          title: isAr ? '🔐 تسجيل الدخول مطلوب' : '🔐 Login Required',
+          text: isAr ? 'يرجى تسجيل الدخول أولاً للوصول إلى سلة مشترياتك وإضافة الباقة.' : 'Please sign in first to access your cart and add this plan.',
+          icon: 'warning',
+          confirmButtonText: isAr ? 'تسجيل الدخول الآن' : 'Sign In Now',
+          confirmButtonColor: '#e056fd',
+          background: isDarkMode ? '#0a192f' : '#ffffff',
+          color: isDarkMode ? '#f8fafc' : '#0f172a'
+        }).then((result: any) => {
+          if (result.isConfirmed) clerk.openSignIn();
+        });
+      } else {
+        alert(isAr ? 'يرجى تسجيل الدخول أولاً للوصول إلى سلة مشترياتك وإضافة الباقة.' : 'Please sign in first.');
+        clerk.openSignIn();
+      }
       return;
     }
     const exists = cart.find(item => item.plan.id === plan.id);
@@ -260,7 +273,6 @@ export default function App() {
               <LucideIcons.Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2.5">
-              {/* هنا قمنا بتكبير الشعار ليكون واضحاً جداً */}
               <Logo className={isDarkMode ? 'text-white' : 'text-slate-900'} lang={lang} imageSizeClass="w-16 h-16 md:w-24 md:h-24" />
               <div className="flex flex-col text-right border-r pr-2.5 border-slate-200">
                 <span className="text-[10px] text-amber-500 font-extrabold flex items-center gap-1">
@@ -295,13 +307,11 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
         
-        {/* البانر التعريفي */}
         <div className="p-8 rounded-3xl bg-gradient-to-tr from-[#0a1128] via-[#0d1527] to-[#122c68] text-white text-right space-y-4 border border-slate-800">
           <h2 className="text-2xl font-black text-amber-400">{isAr ? 'منصة تفعيلك سودان الرسمية' : 'Activate Sudan Platform'}</h2>
           <p className="text-xs text-slate-300 max-w-xl">{isAr ? 'تفعيل فوري وآمن بنسبة 100% لجميع الاشتراكات والذكاء الاصطناعي وباقات الأعمال في السودان.' : 'Instant activations.'}</p>
         </div>
 
-        {/* الكتالوج وعرض الاشتراكات بـ كروت الخدمة */}
         <div className="space-y-6">
           {categoriesDefinition.map((definition) => {
             const list = getServicesByCategory(definition.id);
@@ -332,7 +342,57 @@ export default function App() {
       </main>
 
       <footer className={`border-t py-8 text-center text-xs ${isDarkMode ? 'bg-[#081221] border-slate-900 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
-        <p>© 2026 متجر تفعيلك سودان. كافة الحقوق محفوظة. | activatesudan.online</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 text-right pb-4">
+          <div className="flex flex-wrap gap-4 font-bold text-xs">
+            {/* 1. زر الضمان الذهبي الحديث المربوط بـ SweetAlert2 */}
+            <button 
+              onClick={() => {
+                if ((window as any).Swal) {
+                  (window as any).Swal.fire({
+                    title: isAr ? '🛡️ الضمان الذهبي لمتجر تفعيلك' : '🛡️ Golden Warranty Policy',
+                    text: isAr ? 'جميع اشتراكاتنا الرقمية والبرمجية أصلية ورسمية 100%، وتعمل بضمان كامل ومستمر طوال فترة الشراء مع دعم فني مخصص.' : 'All our digital licenses are 100% genuine and backed by full duration support.',
+                    icon: 'success',
+                    confirmButtonText: isAr ? 'حسناً، فهمت' : 'Great, Got it',
+                    confirmButtonColor: '#f59e0b',
+                    background: isDarkMode ? '#0f172a' : '#ffffff',
+                    color: isDarkMode ? '#f8fafc' : '#0f172a',
+                    showClass: { popup: 'animate__animated animate__fadeInUp animate__faster' },
+                    hideClass: { popup: 'animate__animated animate__fadeOutDown animate__faster' }
+                  });
+                } else {
+                  alert(isAr ? 'جميع اشتراكاتنا أصلية وتعمل بضمان ذهبي ممتد طوال فترة الشراء.' : 'Our licenses are backed with full warranties.');
+                }
+              }}
+              className="hover:text-amber-500 transition duration-200"
+            >
+              {isAr ? 'سياسة الاستبدال والضمان الكامل' : 'Replacement Policy'}
+            </button>
+
+            {/* 2. زر شروط الخدمة الحديث المربوط بـ SweetAlert2 */}
+            <button 
+              onClick={() => {
+                if ((window as any).Swal) {
+                  (window as any).Swal.fire({
+                    title: isAr ? '📜 شروط الخدمة والاستخدام' : '📜 Terms of Service',
+                    text: isAr ? 'نوفر تفعيلات رسمية وآمنة تماماً بالتعاون مع المنصات العالمية الكبرى. يتم تسليم الباقة وتنشيطها على حسابك في مدة لا تتجاوز 15 دقيقة.' : 'We provide safe official activations. Your subscription will be ready within 15 minutes max.',
+                    icon: 'info',
+                    confirmButtonText: isAr ? 'موافق' : 'Accept',
+                    confirmButtonColor: '#2563eb',
+                    background: isDarkMode ? '#0f172a' : '#ffffff',
+                    color: isDarkMode ? '#f8fafc' : '#0f172a',
+                    showClass: { popup: 'animate__animated animate__zoomIn animate__faster' }
+                  });
+                } else {
+                  alert(isAr ? 'متجر تفعيلك سودان معتمد ويوفر تفعيلات رسمية تماماً بالتعاون مع كبرى الشركات.' : 'Trusted and secured in Sudan.');
+                }
+              }}
+              className="hover:text-amber-500 transition duration-200"
+            >
+              {isAr ? 'شروط الخدمة والاستخدام الآمن' : 'Terms of Service'}
+            </button>
+          </div>
+          <p>© 2026 متجر تفعيلك سودان. كافة الحقوق محفوظة. | activatesudan.online</p>
+        </div>
       </footer>
 
       <WhatsAppWidget lang={lang} />
