@@ -447,30 +447,7 @@ export default function App() {
                 )}
               </button>
 
-              {/* Mobile Currency Selector */}
-              <div className="relative flex items-center select-none shrink-0">
-                <select
-                  aria-label="Select Currency / اختر العملة"
-                  value={activeCurrency}
-                  onChange={(e) => {
-                    const val = e.target.value as any;
-                    setActiveCurrency(val);
-                    localStorage.setItem('activate_sudan_active_currency', val);
-                    setToastMsg(lang === 'ar' ? `💱 تم تغيير العملة المفضلة إلى: ${val}` : `💱 Currency changed to: ${val}`);
-                    setTimeout(() => setToastMsg(''), 4000);
-                  }}
-                  className={`outline-none font-black text-[10px] py-1.5 px-1.5 rounded-xl border cursor-pointer transition-all ${
-                    isDarkMode
-                      ? 'bg-slate-800 border-slate-700 text-slate-100'
-                      : 'bg-slate-100 border-slate-200 text-slate-800'
-                  }`}
-                >
-                  <option value="SDG">ج.س</option>
-                  <option value="SAR">ر.س</option>
-                  <option value="EGP">ج.م</option>
-                  <option value="USD">USD</option>
-                </select>
-              </div>
+
 
               {/* Mobile Language Switcher */}
               <button
@@ -569,31 +546,7 @@ export default function App() {
               )}
             </button>
 
-            {/* Desktop Currency Dropdown Selector */}
-            <div className="relative flex items-center gap-1 select-none">
-              <LucideIcons.Coins className="w-4 h-4 text-amber-500 shrink-0" />
-              <select
-                aria-label="Choose Currency / اختر عملتك المفضلة"
-                value={activeCurrency}
-                onChange={(e) => {
-                  const val = e.target.value as any;
-                  setActiveCurrency(val);
-                  localStorage.setItem('activate_sudan_active_currency', val);
-                  setToastMsg(lang === 'ar' ? `💱 تم تغيير العملة المفضلة إلى: ${val}` : `💱 Currency preference saved as: ${val}`);
-                  setTimeout(() => setToastMsg(''), 4000);
-                }}
-                className={`outline-none font-black text-xs py-2.5 px-3 rounded-xl border cursor-pointer focus:ring-2 focus:ring-amber-500/40 transition-all ${
-                  isDarkMode
-                    ? 'bg-slate-800 border-slate-700 text-slate-100'
-                    : 'bg-slate-100 border-slate-200 text-slate-800'
-                }`}
-              >
-                <option value="SDG">{lang === 'ar' ? 'ج.س (السودان)' : 'SDG (Sudan)'}</option>
-                <option value="SAR">{lang === 'ar' ? 'ر.س (السعودية)' : 'SAR (KSA)'}</option>
-                <option value="EGP">{lang === 'ar' ? 'ج.م (مصر)' : 'EGP (Egypt)'}</option>
-                <option value="USD">{lang === 'ar' ? 'USD (الدولار)' : 'USD (Global)'}</option>
-              </select>
-            </div>
+
 
             {/* Desktop Language Selector */}
             <button
