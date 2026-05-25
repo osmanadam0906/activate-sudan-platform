@@ -13,6 +13,7 @@ interface OrderDrawerProps {
   onOrderSuccess: (order: Order) => void;
   prefilledEmail?: string;
   isDarkMode?: boolean;
+  activeCurrency?: 'USD' | 'SDG' | 'SAR' | 'EGP';
 }
 
 export default function OrderDrawer({
@@ -24,6 +25,7 @@ export default function OrderDrawer({
   onOrderSuccess,
   prefilledEmail = '',
   isDarkMode = true,
+  activeCurrency = 'SDG',
 }: OrderDrawerProps) {
   const isAr = lang === 'ar';
 
@@ -35,9 +37,47 @@ export default function OrderDrawer({
   const [copiedState, setCopiedState] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Calculate prices based on plan currency and selected display
-  const finalPriceInSdg = plan.currency === 'SDG' ? plan.price : plan.price * usdToSdgRate;
-  const finalPriceInUsd = plan.currency === 'USD' ? plan.price : Math.round(plan.price / usdToSdgRate);
+  // أسعار الصرف الثابتة مقارنة بالدولار الأمريكي
+  const USD_TO_SDG_EXCHANGE = usdToSdgRate || 4200;
+  const USD_TO_SAR_EXCHANGE = 4;
+  const USD_TO_EGP_EXCHANGE = 55;
+
+  let baseUsd = plan.price;
+  if (plan.currency === 'SDG') {
+    baseUsd = plan.price / USD_TO_SDG_EXCHANGE;
+  }
+
+  // احسب السعر بالعملة النشطة الحالية
+  let activePrice = baseUsd;
+  let activeSymbol = '$';
+  let activeLabel = 'USD';
+
+  if (activeCurrency === 'SDG') {
+    activePrice = baseUsd * USD_TO_SDG_EXCHANGE;
+    activeSymbol = isAr ? 'ج.س' : 'SDG';
+    activeLabel = isAr ? 'جنيه سوداني' : 'Sudanese Pound';
+  } else if (activeCurrency === 'SAR') {
+    activePrice = baseUsd * USD_TO_SAR_EXCHANGE;
+    activeSymbol = isAr ? 'ر.س' : 'SAR';
+    activeLabel = isAr ? 'ريال سعودي' : 'Saudi Riyal';
+  } else if (activeCurrency === 'EGP') {
+    activePrice = baseUsd * USD_TO_EGP_EXCHANGE;
+    activeSymbol = isAr ? 'ج.م' : 'EGP';
+    activeLabel = isAr ? 'جنيه مصري' : 'Egyptian Pound';
+  } else {
+    activePrice = baseUsd;
+    activeSymbol = '$';
+    activeLabel = 'USD';
+  }
+
+  const formatPriceVal = (val: number) => {
+    if (activeCurrency === 'USD' || activeCurrency === 'SAR') {
+      return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return Math.round(val).toLocaleString('en-US');
+  };
+
+  const priceText = `${formatPriceVal(activePrice)} ${activeSymbol}`;
 
   // Pick bank information
   const getSelectedBank = () => {
@@ -66,15 +106,15 @@ export default function OrderDrawer({
 
     // 2. Format a professional activation bill message
     const pMethodTitle = 
-      paymentMethod === 'bankak'
+      plan.price === 0
+        ? (isAr ? 'طلب استفسار وتسعير مرن' : 'Flexible Inquiry / On-Demand')
+        : paymentMethod === 'bankak'
         ? 'تطبيق بنكك (بنك الخرطوم)'
         : paymentMethod === 'fawry'
         ? 'فوري (بنك فيصل)'
         : 'أوكاش (بنك أمدرمان الوطني)';
 
-    const priceText = plan.currency === 'SDG' 
-      ? `${plan.price.toLocaleString('en-US')} SDG`
-      : `${plan.price} USD (~${finalPriceInSdg.toLocaleString('en-US')} SDG)`;
+    const finalPriceText = plan.price === 0 ? (isAr ? 'يحدد مع الموظف بالبيانات المرفقة' : 'TBD (Flexible package quote)') : priceText;
 
     const textAr = `🚨 *طلب تفعيل اشتراك جديد - منصة Activate Sudan* 🚨
 
@@ -82,12 +122,12 @@ export default function OrderDrawer({
 📱 *رقم التواصل:* ${order.clientContact}
 📦 *الخدمة المطلوبة:* ${service.nameAr}
 ⭐ *الباقة:* ${plan.nameAr}
-💰 *القيمة الإجمالية:* ${priceText}
+💰 *القيمة الإجمالية:* ${finalPriceText}
 🎟️ *الحساب المراد تفعيله:* \`${order.activationDetail}\`
-💳 *طريقة الدفع المختارة:* ${pMethodTitle}
+${plan.price > 0 ? `💳 *طريقة الدفع المختارة:* ${pMethodTitle}` : `💬 *ملاحظة:* طلب استفسار مباشر لتنشيط الحساب`}
 🆔 *رقم الطلب:* \`${order.id}\`
 
-💡 _ملاحظة: قمت بتحويل القيمة المطلوبة وأنا جاهز لإرفاق صورة التحويل الإلكترونية لتنشيط الخدمة في دقائق._`;
+💡 _ملاحظة: ${plan.price > 0 ? 'قمت بتحويل القيمة المطلوبة وأنا جاهز لإرفاق صورة التحويل الإلكترونية لتنشيط الخدمة في دقائق.' : 'أود تأكيد باقة مناسبة والاستفسار عن أسعار وتنشيط كاب كات برو مباشرة.'}_`;
 
     const textEn = `🚨 *NEW ACTIVATION REQUEST - Activate Sudan* 🚨
 
@@ -95,12 +135,12 @@ export default function OrderDrawer({
 📱 *Contact Number:* ${order.clientContact}
 📦 *Service:* ${service.nameEn}
 ⭐ *Plan:* ${plan.nameEn}
-💰 *Total Price:* ${priceText}
+💰 *Total Price:* ${finalPriceText}
 🎟 *Account to Activate:* \`${order.activationDetail}\`
-💳 *Payment Gateway:* ${paymentMethod.toUpperCase()}
+${plan.price > 0 ? `💳 *Payment Gateway:* ${paymentMethod.toUpperCase()}` : `💬 *Note:* Requesting pricing structure for CapCut Pro`}
 🆔 *Order Reference:* \`${order.id}\`
 
-💡 _Note: I processed the electronic payment and am ready to supply screenshot for quick service authorization._`;
+💡 _Note: ${plan.price > 0 ? 'I processed the electronic payment and am ready to supply screenshot for quick service authorization.' : 'I would like to inquire about CapCut Pro custom rates and activate it directly.'}_`;
 
     const finalMessage = isAr ? textAr : textEn;
     const encodedMessage = encodeURIComponent(finalMessage);
@@ -211,20 +251,31 @@ export default function OrderDrawer({
                 {isAr ? 'تحديث وتفعيل آمن ورسمي بالكامل خلال ساعة واحدة.' : 'Secure guaranteed official upgrades within an hour.'}
               </p>
             </div>
-            <div className={`md:text-left py-2 px-4 rounded-lg border transition-colors ${
-              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-            }`}>
-              <span className="text-xs text-slate-400 block">{isAr ? 'سعر الاشتراك' : 'Subscription Price'}</span>
-              <span className={`text-lg font-extrabold font-mono ${isDarkMode ? 'text-amber-400' : 'text-blue-600'}`}>
-                {plan.currency === 'USD' ? `$${plan.price}` : `${plan.price.toLocaleString()} SDG`}
-              </span>
-              {/* If plan is SDG, show USD estimated conversion, and vice versa */}
-              <span className="text-[10px] text-slate-400 block mt-0.5">
-                {plan.currency === 'USD'
-                  ? `~ ${finalPriceInSdg.toLocaleString()} SDG`
-                  : `~ $${finalPriceInUsd}`}
-              </span>
-            </div>
+            {plan.price === 0 ? (
+              <div className={`md:text-left py-2 px-4 rounded-lg border transition-colors ${
+                isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              }`}>
+                <span className="text-xs text-slate-400 block">{isAr ? 'حالة السعر والتحويل' : 'Price Status'}</span>
+                <span className={`text-sm sm:text-base font-extrabold block ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                  {isAr ? 'بدون أسعار مسبقة' : 'Flexible Quote'}
+                </span>
+                <span className="text-[10px] text-slate-500 block mt-0.5">
+                  {isAr ? 'استفسر للتفعيل المباشر' : 'Inquire & Activate'}
+                </span>
+              </div>
+            ) : (
+              <div className={`md:text-left py-2 px-4 rounded-lg border transition-colors ${
+                isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              }`}>
+                <span className="text-xs text-slate-400 block">{isAr ? 'سعر الاشتراك الحالي' : 'Selected Plan Price'}</span>
+                <span className={`text-lg font-extrabold font-mono block ${isDarkMode ? 'text-amber-400' : 'text-blue-600'}`}>
+                  {priceText}
+                </span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  {activeCurrency !== 'USD' && `~ $${baseUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </span>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmitOrder} className="space-y-5">
@@ -312,113 +363,118 @@ export default function OrderDrawer({
               </p>
             </div>
 
-            {/* Payment Portal Options */}
-            <div>
-              <label className={`block text-xs font-semibold mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                {isAr ? 'اختر طريقة الدفع المناسبة' : 'Select Payment Method'}
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('bankak')}
-                  className={`py-3 px-2 rounded-xl border text-center transition flex flex-col items-center gap-1.5 cursor-pointer ${
-                    paymentMethod === 'bankak'
-                      ? (isDarkMode ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-bold' : 'border-blue-600 bg-blue-50/40 text-blue-700 font-bold')
-                      : (isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-850' : 'border-slate-200 bg-slate-50/50 text-slate-500 hover:bg-slate-55')
-                  }`}
-                >
-                  <LucideIcons.Wallet className="w-4 h-4" />
-                  <span className="text-[10px] sm:text-xs">{isAr ? 'تطبيق بنكك' : 'Bankak'}</span>
-                </button>
+            {/* Payment Portal Options & Instructions */}
+            {plan.price > 0 && (
+              <>
+                {/* Payment Portal Options */}
+                <div>
+                  <label className={`block text-xs font-semibold mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    {isAr ? 'اختر طريقة الدفع المناسبة' : 'Select Payment Method'}
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('bankak')}
+                      className={`py-3 px-2 rounded-xl border text-center transition flex flex-col items-center gap-1.5 cursor-pointer ${
+                        paymentMethod === 'bankak'
+                          ? (isDarkMode ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-bold' : 'border-blue-600 bg-blue-50/40 text-blue-700 font-bold')
+                          : (isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-850' : 'border-slate-200 bg-slate-50/50 text-slate-500 hover:bg-slate-55')
+                      }`}
+                    >
+                      <LucideIcons.Wallet className="w-4 h-4" />
+                      <span className="text-[10px] sm:text-xs">{isAr ? 'تطبيق بنكك' : 'Bankak'}</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('fawry')}
-                  className={`py-3 px-2 rounded-xl border text-center transition flex flex-col items-center gap-1.5 cursor-pointer ${
-                    paymentMethod === 'fawry'
-                      ? (isDarkMode ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-bold' : 'border-blue-600 bg-blue-50/40 text-blue-700 font-bold')
-                      : (isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-850' : 'border-slate-200 bg-slate-50/50 text-slate-500 hover:bg-slate-55')
-                  }`}
-                >
-                  <LucideIcons.CheckSquare className="w-4 h-4" />
-                  <span className="text-[10px] sm:text-xs">{isAr ? 'فوري' : 'Fawry'}</span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('fawry')}
+                      className={`py-3 px-2 rounded-xl border text-center transition flex flex-col items-center gap-1.5 cursor-pointer ${
+                        paymentMethod === 'fawry'
+                          ? (isDarkMode ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-bold' : 'border-blue-600 bg-blue-50/40 text-blue-700 font-bold')
+                          : (isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-850' : 'border-slate-200 bg-slate-50/50 text-slate-500 hover:bg-slate-55')
+                      }`}
+                    >
+                      <LucideIcons.CheckSquare className="w-4 h-4" />
+                      <span className="text-[10px] sm:text-xs">{isAr ? 'فوري' : 'Fawry'}</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('ocash')}
-                  className={`py-3 px-2 rounded-xl border text-center transition flex flex-col items-center gap-1.5 cursor-pointer ${
-                    paymentMethod === 'ocash'
-                      ? (isDarkMode ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-bold' : 'border-blue-600 bg-blue-50/40 text-blue-700 font-bold')
-                      : (isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-850' : 'border-slate-200 bg-slate-50/50 text-slate-500 hover:bg-slate-55')
-                  }`}
-                >
-                  <LucideIcons.Smartphone className="w-4 h-4" />
-                  <span className="text-[10px] sm:text-xs">{isAr ? 'أوكاش' : 'O-Cash'}</span>
-                </button>
-              </div>
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('ocash')}
+                      className={`py-3 px-2 rounded-xl border text-center transition flex flex-col items-center gap-1.5 cursor-pointer ${
+                        paymentMethod === 'ocash'
+                          ? (isDarkMode ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-bold' : 'border-blue-600 bg-blue-50/40 text-blue-700 font-bold')
+                          : (isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-850' : 'border-slate-200 bg-slate-50/50 text-slate-500 hover:bg-slate-55')
+                      }`}
+                    >
+                      <LucideIcons.Smartphone className="w-4 h-4" />
+                      <span className="text-[10px] sm:text-xs">{isAr ? 'أوكاش' : 'O-Cash'}</span>
+                    </button>
+                  </div>
+                </div>
 
-            {/* Selected Payee Bank Instructions Card */}
-            <div className={`p-4 rounded-xl border space-y-3.5 transition-colors duration-300 ${
-              isDarkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50/40 border-slate-200'
-            }`}>
-              <div className={`flex items-center justify-between border-b pb-2.5 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                <div className="flex items-center gap-2">
-                  <div className={`p-1 px-2 text-xs rounded-md font-bold animate-pulse ${
-                    isDarkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-50 text-blue-700'
+                {/* Selected Payee Bank Instructions Card */}
+                <div className={`p-4 rounded-xl border space-y-3.5 transition-colors duration-300 ${
+                  isDarkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50/40 border-slate-200'
+                }`}>
+                  <div className={`flex items-center justify-between border-b pb-2.5 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1 px-2 text-xs rounded-md font-bold animate-pulse ${
+                        isDarkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-50 text-blue-700'
+                      }`}>
+                        {isAr ? 'تحويل تفعيل' : 'Direct deposit'}
+                      </div>
+                      <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                        {isAr ? selectedBank.bankNameAr : selectedBank.bankNameEn}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className={`flex justify-between items-center px-3 py-2.5 rounded-lg border transition-colors ${
+                      isDarkMode ? 'bg-slate-950/80 border-slate-850' : 'bg-white border-slate-200'
+                    }`}>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">
+                          {isAr ? 'رقم الحساب للتحويل' : 'Account Number'}
+                        </span>
+                        <span className={`text-sm font-mono font-bold select-all break-all ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                          {selectedBank.accountNumber}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyAccount(selectedBank.accountNumber)}
+                        className={`p-1.5 rounded-md transition ${
+                          isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-705 lg:hover:text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                        }`}
+                        title={isAr ? 'نسخ الرقم' : 'Copy'}
+                      >
+                        {copiedState ? (
+                          <LucideIcons.Check className="w-4 h-4 text-emerald-500" />
+                        ) : (
+                          <LucideIcons.Copy className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+
+                    <div className={`flex justify-between items-center px-3 py-1.5 rounded-lg text-xs transition ${
+                      isDarkMode ? 'bg-slate-900/50 text-slate-350' : 'bg-slate-50/50 text-slate-650'
+                    }`}>
+                      <span className="text-slate-400">{isAr ? 'اسم المستفيد:' : 'Beneficiary Name:'}</span>
+                      <span className={`font-semibold ${isDarkMode ? 'text-amber-400' : 'text-slate-700'}`}>{isAr ? selectedBank.accountNameAr : selectedBank.accountNameEn}</span>
+                    </div>
+                  </div>
+
+                  <div className={`text-xs leading-relaxed p-3 rounded-lg border flex gap-2 ${
+                    isDarkMode ? 'bg-amber-500/10 border-amber-500/15 text-slate-300' : 'bg-blue-50/30 border-blue-100/50 text-slate-600'
                   }`}>
-                    {isAr ? 'تحويل تفعيل' : 'Direct deposit'}
+                    <LucideIcons.Info className={`w-4 h-4 shrink-0 mt-0.5 ${isDarkMode ? 'text-amber-400' : 'text-blue-500'}`} />
+                    <p>{isAr ? selectedBank.transferGuideAr : selectedBank.transferGuideEn}</p>
                   </div>
-                  <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                    {isAr ? selectedBank.bankNameAr : selectedBank.bankNameEn}
-                  </span>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className={`flex justify-between items-center px-3 py-2.5 rounded-lg border transition-colors ${
-                  isDarkMode ? 'bg-slate-950/80 border-slate-850' : 'bg-white border-slate-200'
-                }`}>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">
-                      {isAr ? 'رقم الحساب للتحويل' : 'Account Number'}
-                    </span>
-                    <span className={`text-sm font-mono font-bold select-all break-all ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                      {selectedBank.accountNumber}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyAccount(selectedBank.accountNumber)}
-                    className={`p-1.5 rounded-md transition ${
-                      isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-705 lg:hover:text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
-                    }`}
-                    title={isAr ? 'نسخ الرقم' : 'Copy'}
-                  >
-                    {copiedState ? (
-                      <LucideIcons.Check className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <LucideIcons.Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                <div className={`flex justify-between items-center px-3 py-1.5 rounded-lg text-xs transition ${
-                  isDarkMode ? 'bg-slate-900/50 text-slate-350' : 'bg-slate-50/50 text-slate-650'
-                }`}>
-                  <span className="text-slate-400">{isAr ? 'اسم المستفيد:' : 'Beneficiary Name:'}</span>
-                  <span className={`font-semibold ${isDarkMode ? 'text-amber-400' : 'text-slate-700'}`}>{isAr ? selectedBank.accountNameAr : selectedBank.accountNameEn}</span>
-                </div>
-              </div>
-
-              <div className={`text-xs leading-relaxed p-3 rounded-lg border flex gap-2 ${
-                isDarkMode ? 'bg-amber-500/10 border-amber-500/15 text-slate-300' : 'bg-blue-50/30 border-blue-100/50 text-slate-600'
-              }`}>
-                <LucideIcons.Info className={`w-4 h-4 shrink-0 mt-0.5 ${isDarkMode ? 'text-amber-400' : 'text-blue-500'}`} />
-                <p>{isAr ? selectedBank.transferGuideAr : selectedBank.transferGuideEn}</p>
-              </div>
-            </div>
+              </>
+            )}
 
             {/* CTAs */}
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
