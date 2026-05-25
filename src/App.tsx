@@ -29,11 +29,12 @@ const SPECIAL_OFFERS = [
     nameAr: 'تليجرام بريميوم النخبوي (شهر)',
     nameEn: 'Telegram Premium Elite (1 Month)',
     discountBadge: '-40%',
-    iconName: 'Telegram',
+    iconName: 'Send',
     oldPrice: '120K',
     newPrice: '57K',
     oldPriceUsd: '13.0',
-    newPriceUsd: '7.2'
+    newPriceUsd: '7.2',
+    directIconUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg'
   },
   {
     id: 'duo-plus-special',
@@ -42,11 +43,12 @@ const SPECIAL_OFFERS = [
     nameAr: 'سوبر دولينجو بلس لتعلم اللغات (سنة)',
     nameEn: 'Super Duolingo Plus (1 Year)',
     discountBadge: '-58%',
-    iconName: 'Duolingo',
+    iconName: 'GraduationCap',
     oldPrice: '282K',
     newPrice: '141K',
     oldPriceUsd: '80.0',
-    newPriceUsd: '33.6'
+    newPriceUsd: '33.6',
+    directIconUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Duolingo_logo_%282019%29.svg'
   },
   {
     id: 'yt-premium-special',
@@ -59,7 +61,8 @@ const SPECIAL_OFFERS = [
     oldPrice: '44K',
     newPrice: '26K',
     oldPriceUsd: '10.3',
-    newPriceUsd: '6.22'
+    newPriceUsd: '6.22',
+    directIconUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg'
   }
 ];
 
@@ -412,7 +415,7 @@ export default function App() {
             </button>
 
             <div className="flex items-center gap-2.5">
-              <Logo className={isDarkMode ? 'text-white' : 'text-slate-900'} lang={lang} />
+              <Logo className={isDarkMode ? 'text-white' : 'text-slate-900'} lang={lang} imageSizeClass="w-16 h-16 md:w-20 md:h-20" />
               <div className={`flex flex-col text-right border-r pr-2.5 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                 <span className="text-[10px] text-amber-500 font-extrabold tracking-widest leading-none uppercase flex items-center gap-1">
                   <span>🇸🇩</span>
@@ -483,7 +486,7 @@ export default function App() {
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="px-2.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-[10px] transition active:scale-95 cursor-pointer">
-                    {isAr ? 'تسجيل الدخول 🔐' : 'Login 🔐'}
+                    {isAr ? 'دخول 🔐' : 'Login 🔐'}
                   </button>
                 </SignInButton>
               </SignedOut>
