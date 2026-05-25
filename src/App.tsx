@@ -91,8 +91,8 @@ export default function App() {
 
   // أسعار الصرف الثابتة المعتمدة في تفعيل الاشتراكات الرقمية (يمكن تغييرها يدوياً هنا)
   const USD_TO_SDG_EXCHANGE = 4200; // 1 دولار = 4200 جنيه سوداني
-  const USD_TO_SAR_EXCHANGE = 4; // 1 دولار = 3.75 ريال سعودي
-  const USD_TO_EGP_EXCHANGE = 55.0; // 1 دولار = 50.0 جنيه مصري
+  const USD_TO_SAR_EXCHANGE = 4; // 1 دولار = 4 ريال سعودي
+  const USD_TO_EGP_EXCHANGE = 55; // 1 دولار = 55 جنيه مصري
 
   // العملة النشطة (محددة جغرافياً عبر الـ IP أو يدوياً عبر الهيدر)
   const [activeCurrency, setActiveCurrency] = useState<'USD' | 'SDG' | 'SAR' | 'EGP'>(() => {
@@ -2038,6 +2038,7 @@ export default function App() {
           usdToSdgRate={usdToSdgRate}
           lang={lang}
           isDarkMode={isDarkMode}
+          activeCurrency={activeCurrency}
           onClose={() => setSelectedPlanDetail(null)}
           onOrderSuccess={(ord) => {
             handleOrderSuccess(ord);
@@ -2254,6 +2255,7 @@ export default function App() {
         cart={cart}
         lang={lang}
         usdToSdgRate={usdToSdgRate}
+        activeCurrency={activeCurrency}
         onUpdateQuantity={(itemId, qty) => {
           const updated = cart.map(item => item.id === itemId ? { ...item, quantity: qty } : item);
           saveCart(updated);
