@@ -6,7 +6,7 @@ import PriceWidget from './PriceWidget';
 
 interface ServiceCardProps {
   key?: string;
-  service: Service;
+  service: Service & { directIconUrl?: string }; // قمنا بتعريف السطر الجديد هنا ليفهمه التايب سكريبت
   usdToSdgRate: number;
   showCurrencyEquivalent: boolean;
   selectedCurrency: 'SDG' | 'USD' | 'both';
@@ -54,7 +54,16 @@ export default function ServiceCard({
                 ? 'bg-slate-850 border-slate-700/60 shadow-slate-950/40' 
                 : 'bg-white border-slate-200/80'
             }`}>
-              <PlatformLogo serviceId={service.id} fallbackIconName={service.iconName} className="w-11 h-11" />
+              {/* التعديل الذكي هنا: إذا وجد رابط مباشر يعرض صورة عالية الدقة، وإلا يفتح الأيقونة القديمة */}
+              {service.directIconUrl ? (
+                <img 
+                  src={service.directIconUrl} 
+                  alt={service.nameEn} 
+                  className="w-11 h-11 object-contain" 
+                />
+              ) : (
+                <PlatformLogo serviceId={service.id} fallbackIconName={service.iconName} className="w-11 h-11" />
+              )}
             </div>
 
             <div>
@@ -146,8 +155,6 @@ export default function ServiceCard({
                   lang={lang}
                   isDarkMode={isDarkMode}
                 />
-
-
 
                 {/* Bullet Points list */}
                 <ul className="space-y-2.5">
