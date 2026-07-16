@@ -161,8 +161,8 @@ export default function App() {
     return [
       {
         id: 'ad-default-1',
-        textAr: '⚡ تفعيل فوري لجميع اشتراكات بريميوم والذكاء الاصطناعي وجوجل ون وباقة الأعمال خلال أقل من 15 دقيقة متاح الآن بالسودان!',
-        textEn: '⚡ Instant activation for all premium accounts and Google One plans under 15 minutes is live in Sudan!',
+        textAr: '🔥 حبابكم عشرة في تفعيلك سودان! تفعيل فوري لجميع اشتراكات بريميوم والذكاء الاصطناعي وباقة الأعمال في أقل من 15 دقيقة ببنكك مباشرة 🇸🇩⚡️',
+        textEn: '🔥 Welcome to Activate Sudan! Instant activation for all premium and AI accounts under 15 minutes is live in Sudan! 🇸🇩⚡️',
         type: 'bar',
         active: true,
         createdAt: new Date().toISOString()
@@ -1369,40 +1369,85 @@ export default function App() {
             </div>
 
             {/* Left: Constant Static Pricing exchange details */}
-            <div className="lg:col-span-5 flex flex-col justify-between p-5 rounded-2xl bg-slate-900/60 dark:bg-slate-950/70 border border-slate-800 text-right space-y-4">
+            <div className="lg:col-span-5 flex flex-col justify-between p-5 rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-950/90 border border-slate-800 shadow-xl text-right space-y-4 relative overflow-hidden group">
+              {/* Vibrant Decorative Sudanese Ribbon Accent */}
+              <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-red-600 via-slate-100 via-black to-emerald-600 opacity-90" />
+              
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-500 flex items-center gap-1 justify-start">
-                  <LucideIcons.Coins className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{isAr ? 'تسعير مستقر ومضمون بالسودان' : '🔒 STABLE PRICE GUARANTEE'}
-                </span></span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-1.5 justify-start">
+                  <LucideIcons.Coins className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span>{isAr ? 'أسعار صرف مستقرة ومعتمدة 🇸🇩' : '🔒 STABLE PRICE GUARANTEE 🇸🇩'}</span>
+                </span>
                 <h4 className="text-base font-black text-white flex items-center gap-2 leading-none justify-start">
                   <span>$1 USD =</span>
-                  <span className="text-amber-400 font-extrabold font-mono text-lg">4,200 SDG</span>
+                  <span className="text-amber-400 font-extrabold font-mono text-xl tracking-tight">6,000 SDG</span>
+                  <span className="text-emerald-400 text-[9px] font-extrabold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">{isAr ? 'سعر ثابت' : 'Fixed'}</span>
                 </h4>
-                <p className="text-[10px] leading-relaxed text-slate-300 font-bold">
+                <p className="text-[10px] leading-relaxed text-slate-300 font-medium">
                   {isAr 
-                    ? 'نوفر سياسة سعرية ثابتة دون تذبذب، تتيح لك الشراء والدفع من داخل وخارج السودان بمرونة تامة، بالعملة المحلية (ج.س) أو الدولار.'
-                    : 'We apply static locks on SDG rate without market volatility, allowing payments globally.'}
+                    ? 'نوفر سياسة سعرية ثابتة ومستقرة تماماً بقيمة 6,000 جنيه للدولار لجميع الخدمات والاشتراكات لنسهّل عليك الشراء والدفع ببنكك أو بشتى الطرق المريحة!'
+                    : 'We apply a completely stable fixed rate of 6,000 SDG per USD for all premium subscriptions, allowing smooth transactions via local banking.'}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-slate-800/80 pt-3 flex-wrap gap-2">
-                <span className="text-[10px] text-slate-450 text-slate-400 font-bold">
-                  {isAr ? 'عرض عملات بطاقات المنتجات:' : 'Products currencies display:'}
-                </span>
+              <div className="space-y-2 border-t border-slate-850 pt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-300 font-bold flex items-center gap-1">
+                    <LucideIcons.Eye className="w-3.5 h-3.5 text-blue-400" />
+                    <span>{isAr ? 'طريقة عرض الأسعار في المتجر:' : 'Currency Display Preference:'}</span>
+                  </span>
+                </div>
 
-                <button
-                  onClick={() => setShowCurrencyEquivalent(!showCurrencyEquivalent)}
-                  className={`px-3.5 py-1.5 rounded-xl text-[10px] font-extrabold border transition cursor-pointer active:scale-95 ${
-                    showCurrencyEquivalent
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-3xs'
-                      : 'bg-slate-800/40 border-slate-800 text-slate-400'
-                  }`}
-                >
-                  {isAr
-                    ? (showCurrencyEquivalent ? 'تعرض بالعملتين (ج.س / $) مفعّل' : 'تعرض بالدولار فقط ($)')
-                    : (showCurrencyEquivalent ? 'Dual Price ON' : 'Show USD only')}
-                </button>
+                {/* Elegant 3-Way Segment Selector */}
+                <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-850">
+                  {/* Option 1: USD Only */}
+                  <button
+                    onClick={() => {
+                      setActiveCurrency('USD');
+                      setShowCurrencyEquivalent(false);
+                    }}
+                    className={`py-2 rounded-lg text-[10px] font-extrabold transition-all duration-250 cursor-pointer active:scale-95 flex flex-col items-center justify-center gap-0.5 ${
+                      activeCurrency === 'USD' && !showCurrencyEquivalent
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-900/35 border border-blue-500'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                    }`}
+                  >
+                    <span>{isAr ? 'بالدولار فقط' : 'USD Only'}</span>
+                    <span className="text-[8px] opacity-80 font-mono">$ USD</span>
+                  </button>
+
+                  {/* Option 2: SDG Only */}
+                  <button
+                    onClick={() => {
+                      setActiveCurrency('SDG');
+                      setShowCurrencyEquivalent(false);
+                    }}
+                    className={`py-2 rounded-lg text-[10px] font-extrabold transition-all duration-250 cursor-pointer active:scale-95 flex flex-col items-center justify-center gap-0.5 ${
+                      activeCurrency === 'SDG' && !showCurrencyEquivalent
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-900/35 border border-blue-500'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                    }`}
+                  >
+                    <span>{isAr ? 'بالجنيه فقط' : 'SDG Only'}</span>
+                    <span className="text-[8px] opacity-80 font-mono">ج.س SDG</span>
+                  </button>
+
+                  {/* Option 3: Both currencies */}
+                  <button
+                    onClick={() => {
+                      setActiveCurrency('SDG');
+                      setShowCurrencyEquivalent(true);
+                    }}
+                    className={`py-2 rounded-lg text-[10px] font-extrabold transition-all duration-250 cursor-pointer active:scale-95 flex flex-col items-center justify-center gap-0.5 ${
+                      activeCurrency === 'SDG' && showCurrencyEquivalent
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-900/40 border border-blue-500'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                    }`}
+                  >
+                    <span>{isAr ? 'بالعملتين معاً' : 'Dual Currency'}</span>
+                    <span className="text-[8px] opacity-80 font-mono">ج.س / $</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
